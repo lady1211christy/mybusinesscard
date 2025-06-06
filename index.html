@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>亭亭名片</title>
+  
+  <!-- Apple touch icon 設定，讓使用者加主畫面時顯示 APP 圖示 -->
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <style>
+    :root {
+      --vh: 1vh;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: calc(var(--vh) * 100);
+      width: 100%;
+      font-family: 'Noto Sans TC', Arial, sans-serif;
+      background-color: #f9f2ed;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    /* 卡片容器 */
+    .card-container {
+      width: 90%;
+      max-width: 430px;
+      background-color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    /* 卡片滑動區塊 */
+    .card-slider {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      touch-action: pan-y;
+    }
+    /* 內部卡片群 */
+    .cards {
+      display: flex;
+      transition: transform 0.5s ease;
+      will-change: transform;
+    }
+    /* 每張卡片 */
+    .card {
+      min-width: 100%;
+      box-sizing: border-box;
+      position: relative;
+    }
+    /* 卡片 header */
+    .card-header {
+      background-color: var(--banner-color);
+      padding: 20px;
+      text-align: center;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+    }
+    .avatar {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto;
+      background-color: var(--banner-color);
+      border-radius: 50%;
+      overflow: hidden;
+      border: 4px solid #fff;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* 卡片內容 */
+    .card-body {
+      padding: 15px 20px 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #4a5568;
+      margin: 0;
+      font-size: 20px;
+    }
+    h2 {
+      color: #718096;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 5px 0 15px;
+    }
+    .info-section {
+      margin: 15px 20px 0;
+      text-align: left;
+    }
+    .info-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #4a5568;
+    }
+    .info-item svg {
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+      fill: #718096;
+    }
+    .services {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #4a5568;
+      padding: 0 20px;
+    }
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0 10px;
+    }
+    .social-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--banner-color);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .social-icon:hover {
+      filter: brightness(0.9);
+    }
+    .social-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: #4a5568;
+    }
+    /* 分頁小圓點 */
+    .slider-dots {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0;
+      justify-content: center;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #ccc;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .dot.active {
+      background-color: #718096;
+    }
+    /* 左右箭頭 */
+    .slider-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .prev-btn {
+      left: 10px;
+    }
+    .next-btn {
+      right: 10px;
+    }
+    .company-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #4a5568;
+      z-index: 5;
+    }
+    /* 聯絡表單樣式 */
+    .contact-form {
+      text-align: left;
+      margin-top: 10px;
+    }
+    .contact-form .form-field {
+      margin-bottom: 15px;
+    }
+    .contact-form label {
+      display: block;
+      font-size: 14px;
+      color: #4a5568;
+      margin-bottom: 5px;
+    }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--banner-color);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    /* 移除了隱藏手機箭頭的 media query */
+  </style>
+</head>
+<body>
+  <div class="card-container">
+    <div class="card-slider">
+      <!-- 左箭頭 -->
+      <button class="slider-btn prev-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="cards">
+        <!-- 卡片 1：拓曜知識宇宙 -->
+        <div class="card" style="--banner-color: #f0e6dd;">
+          <div class="company-tag">拓曜知識宇宙</div>
+          <div class="card-header">
+            <div class="avatar">
+              <img src="https://res.cloudinary.com/dqxlydpfz/image/upload/t_christy-001/v1744489014/%E6%88%AA%E5%9C%96_2025-04-13_%E5%87%8C%E6%99%A84.15.51_s9kdfl.png" alt="christy-001">
+            </div>
+          </div>
+          <div class="card-body">
+            <h1>秦舒亭(亭亭)</h1>
+            <h2>執行長 | 拓曜知識宇宙有限公司</h2>
+            <div class="info-section">
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M7 2H17C18.1 2 19 2.9 19 4V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V4C5 2.9 5.9 2 7 2Z"/>
+                  <path d="M12 18C12.55 18 13 17.55 13 17C13 16.45 12.55 16 12 16C11.45 16 11 16.45 11 17C11 17.55 11.45 18 12 18Z"/>
+                </svg>
+                <span>0921 313 224</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5"/>
+                </svg>
+                <span>04 7201 883</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span>lady1211christy@gmail.com</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke="#718096" stroke-width="2" fill="none"/>
+                  <line x1="8" y1="10" x2="16" y2="10" stroke="#718096" stroke-width="2"/>
+                  <line x1="8" y1="14" x2="12" y2="14" stroke="#718096" stroke-width="2"/>
+                </svg>
+                <span>統編：60735086</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <span>500彰化市忠權里16鄰自立街206巷27號6樓</span>
+              </div>
+            </div>
+            <div class="services">
+              AI應用課程．品牌策略．網路行銷．公關活動
+            </div>
+            <div class="social-links">
+              <a href="https://line.me/ti/p/AYi6eOxyvW" class="social-icon" title="LINE" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 5.82 2 10c0 2.03 1.14 3.84 2.97 5.08L2 22l6.34-3.24C9 19.82 10.46 20 12 20c5.52 0 10-3.82 10-8s-4.48-8-10-8z"/>
+                </svg>
+              </a>
+              <a href="https://www.facebook.com/lady1211christy/" class="social-icon" title="Facebook" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                </svg>
+              </a>
+              <a href="https://helloaiworld1111.replit.app/blog?" class="social-icon" title="Blog" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M4 2h12l4 4v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+                </svg>
+              </a>
+              <a href="javascript:void(0)" class="social-icon" title="複製網址" onclick="copyCardURL()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <!-- 卡片 2：光明頂創育 -->
+        <div class="card" style="--banner-color: #D5E1DF;">
+          <div class="company-tag">光明頂創育</div>
+          <div class="card-header">
+            <div class="avatar">
+              <img src="https://res.cloudinary.com/dqxlydpfz/image/upload/t_christy-002/v1744489021/%E6%88%AA%E5%9C%96_2025-04-13_%E5%87%8C%E6%99%A84.16.18_xwvcun.png" alt="christy-002">
+            </div>
+          </div>
+          <div class="card-body">
+            <h1>秦舒亭(亭亭)</h1>
+            <h2>營運長 | 光明頂創育股份有限公司</h2>
+            <div class="info-section">
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M7 2H17C18.1 2 19 2.9 19 4V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V4C5 2.9 5.9 2 7 2Z"/>
+                  <path d="M12 18C12.55 18 13 17.55 13 17C13 16.45 12.55 16 12 16C11.45 16 11 16.45 11 17C11 17.55 11.45 18 12 18Z"/>
+                </svg>
+                <span>0921 313 224</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5"/>
+                </svg>
+                <span>04 2252 1572</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span>christy@ideax.com.tw</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke="#718096" stroke-width="2" fill="none"/>
+                  <line x1="8" y1="10" x2="16" y2="10" stroke="#718096" stroke-width="2"/>
+                  <line x1="8" y1="14" x2="12" y2="14" stroke="#718096" stroke-width="2"/>
+                </svg>
+                <span>統編：24826684</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <span>407612台中市西屯區市政北七路186號4樓之七F室</span>
+              </div>
+            </div>
+            <div class="services">
+              AI應用課程．品牌策略．網路行銷．公關活動
+            </div>
+            <div class="social-links">
+              <a href="https://line.me/ti/p/AYi6eOxyvW" class="social-icon" title="LINE" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 5.82 2 10c0 2.03 1.14 3.84 2.97 5.08L2 22l6.34-3.24C9 19.82 10.46 20 12 20c5.52 0 10-3.82 10-8s-4.48-8-10-8z"/>
+                </svg>
+              </a>
+              <a href="https://www.facebook.com/lady1211christy/" class="social-icon" title="Facebook" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                </svg>
+              </a>
+              <a href="https://helloaiworld1111.replit.app/blog?" class="social-icon" title="Blog" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M4 2h12l4 4v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+                </svg>
+              </a>
+              <a href="javascript:void(0)" class="social-icon" title="複製網址" onclick="copyCardURL()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <!-- 卡片 3：山海邑資產管理股份有限公司 -->
+        <div class="card" style="--banner-color: #EEEAE7;">
+          <div class="company-tag">山海邑資產管理</div>
+          <div class="card-header">
+            <div class="avatar">
+              <img src="https://res.cloudinary.com/dqxlydpfz/image/upload/t_christy-001/v1744490490/%E6%88%AA%E5%9C%96_2025-04-13_%E5%87%8C%E6%99%A84.41.17_rjoabt.png" alt="christy-002">
+            </div>
+          </div>
+          <div class="card-body">
+            <h1>秦舒亭 (亭亭)</h1>
+            <h2>營運長 | 山海邑資產管理股份有限公司</h2>
+            <div class="info-section">
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M7 2H17C18.1 2 19 2.9 19 4V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V4C5 2.9 5.9 2 7 2Z"/>
+                  <path d="M12 18C12.55 18 13 17.55 13 17C13 16.45 12.55 16 12 16C11.45 16 11 16.45 11 17C11 17.55 11.45 18 12 18Z"/>
+                </svg>
+                <span>0921 313 224</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5"/>
+                </svg>
+                <span>04 2252 1572</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span>lady1211christy@gmail.com</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke="#718096" stroke-width="2" fill="none"/>
+                  <line x1="8" y1="10" x2="16" y2="10" stroke="#718096" stroke-width="2"/>
+                  <line x1="8" y1="14" x2="12" y2="14" stroke="#718096" stroke-width="2"/>
+                </svg>
+                <span>統編：89156743</span>
+              </div>
+              <div class="info-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <span>407612台中市西屯區市政北七路186號4樓之七F室</span>
+              </div>
+            </div>
+            <div class="services">
+              AI應用課程．品牌策略．網路行銷．公關活動
+            </div>
+            <div class="social-links">
+              <a href="https://line.me/ti/p/AYi6eOxyvW" class="social-icon" title="LINE" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 5.82 2 10c0 2.03 1.14 3.84 2.97 5.08L2 22l6.34-3.24C9 19.82 10.46 20 12 20c5.52 0 10-3.82 10-8s-4.48-8-10-8z"/>
+                </svg>
+              </a>
+              <a href="https://www.facebook.com/lady1211christy/" class="social-icon" title="Facebook" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                </svg>
+              </a>
+              <a href="https://helloaiworld1111.replit.app/blog?" class="social-icon" title="Blog" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M4 2h12l4 4v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+                </svg>
+              </a>
+              <a href="javascript:void(0)" class="social-icon" title="複製網址" onclick="copyCardURL()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <!-- 卡片 4：聯絡亭亭 (表單卡) -->
+        <div class="card" style="--banner-color: #E1E5F2;">
+          <div class="company-tag">聯絡亭亭</div>
+          <div class="card-header">
+            <div class="avatar">
+              <img src="https://res.cloudinary.com/dqxlydpfz/image/upload/t_christy-001/v1744489014/%E6%88%AA%E5%9C%96_2025-04-13_%E5%87%8C%E6%99%A84.15.51_s9kdfl.png" alt="christy-contact">
+            </div>
+          </div>
+          <div class="card-body">
+            <h1>有問題找亭亭</h1>
+            <h2>我會盡快回覆您的訊息</h2>
+            <form name="contact" method="POST" data-netlify="true" class="contact-form">
+              <input type="hidden" name="form-name" value="contact">
+              <div class="form-field">
+                <label for="name">姓名</label>
+                <input type="text" id="name" name="name" required>
+              </div>
+              <div class="form-field">
+                <label for="phone">聯絡電話</label>
+                <input type="tel" id="phone" name="phone" required>
+              </div>
+              <div class="form-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+              </div>
+              <div class="form-field">
+                <label for="message">今天有什麼問題想跟亭亭聯繫呢？</label>
+                <textarea id="message" name="message" placeholder="請寫下你的需求..." rows="3" required></textarea>
+              </div>
+              <button type="submit" class="submit-btn">送出訊息</button>
+            </form>
+          </div>
+        </div>
+        <!-- 卡片 5：QR Code 頁 (已更新) -->
+        <div class="card" style="--banner-color: #FCEED1;">
+          <div class="company-tag">QR Code</div>
+          <div class="card-header" style="display: flex; flex-direction: column; align-items: center;">
+            <!-- 更新後的頭像 -->
+            <div class="avatar">
+              <img src="https://res.cloudinary.com/dqxlydpfz/image/upload/t_christy-001/v1744577066/891fb27f-bc65-469b-8afd-e70f5df7e207_gmv1aa.png" alt="新頭像">
+            </div>
+            <!-- QR Code 區塊，放在頭像下方且不壓邊 -->
+            <div style="margin-top: 12px; padding: 0 10px;">
+              <img src="https://res.cloudinary.com/dqxlydpfz/image/upload/v1744577259/qr.ioi.tw_jgszza.png" alt="QR Code" style="width: 70%; height: auto; display: block; margin: 0 auto;">
+            </div>
+          </div>
+          <div class="card-body">
+            <h1>請掃我 認識亭亭更多</h1>
+          </div>
+        </div>
+      </div>
+      <!-- 分頁小圓點 -->
+      <div class="slider-dots"></div>
+      <!-- 右箭頭 -->
+      <button class="slider-btn next-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // 調整真實視窗高度（解決 iOS 100vh 問題）
+    function setRealVh() {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', setRealVh);
+    document.addEventListener('DOMContentLoaded', setRealVh);
+
+    // 複製網址功能
+    function copyCardURL() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('卡片網址已複製到剪貼簿！');
+      }, () => {
+        alert('複製失敗，請手動複製網址');
+      });
+    }
+
+    // 卡片手指滑動效果設定及左右箭頭點擊功能
+    document.addEventListener('DOMContentLoaded', function() {
+      const cardSlider = document.querySelector('.card-slider');
+      const cardsContainer = document.querySelector('.cards');
+      const sliderDotsContainer = document.querySelector('.slider-dots');
+      const prevBtn = document.querySelector('.prev-btn');
+      const nextBtn = document.querySelector('.next-btn');
+      const cards = document.querySelectorAll('.card');
+      let currentIndex = 0;
+      const totalCards = cards.length;
+      const swipeThreshold = 50; // 手指滑動門檻
+      let startX = 0, startY = 0, deltaX = 0, isSwiping = false;
+      let sliderWidth = cardSlider.offsetWidth;
+
+      // 更新卡片滑動
+      function updateSlider(animate = true) {
+        if (animate) {
+          cardsContainer.style.transition = 'transform 0.5s ease';
+        }
+        cardsContainer.style.transform = `translate3d(-${currentIndex * 100}%, 0, 0)`;
+        if (sliderDotsContainer) {
+          Array.from(sliderDotsContainer.children).forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentIndex);
+          });
+        }
+      }
+
+      // 建立分頁小圓點
+      if (sliderDotsContainer) {
+        for (let i = 0; i < totalCards; i++) {
+          const dot = document.createElement('div');
+          dot.classList.add('dot');
+          if (i === 0) dot.classList.add('active');
+          dot.addEventListener('click', () => {
+            currentIndex = i;
+            updateSlider();
+          });
+          sliderDotsContainer.appendChild(dot);
+        }
+      }
+
+      // 左右箭頭點擊功能
+      prevBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex === 0) ? totalCards - 1 : currentIndex - 1;
+        updateSlider();
+      });
+      nextBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex === totalCards - 1) ? 0 : currentIndex + 1;
+        updateSlider();
+      });
+
+      // 監聽手指滑動起始點
+      cardsContainer.addEventListener('touchstart', (e) => {
+        const touch = e.changedTouches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        deltaX = 0;
+        isSwiping = false;
+        cardsContainer.style.transition = 'none';
+        sliderWidth = cardSlider.offsetWidth;
+      });
+
+      // 手指滑動中動作
+      cardsContainer.addEventListener('touchmove', (e) => {
+        const touch = e.changedTouches[0];
+        deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        if (!isSwiping && Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
+          isSwiping = true;
+          e.preventDefault();
+        }
+        if (isSwiping) {
+          const movePercent = (deltaX / sliderWidth) * 100;
+          cardsContainer.style.transform = `translate3d(-${currentIndex * 100 - movePercent}%, 0, 0)`;
+        }
+      }, {passive: false});
+
+      // 手指滑動結束判斷
+      cardsContainer.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        if (deltaX < -swipeThreshold) {
+          currentIndex = (currentIndex === totalCards - 1) ? 0 : currentIndex + 1;
+        } else if (deltaX > swipeThreshold) {
+          currentIndex = (currentIndex === 0) ? totalCards - 1 : currentIndex - 1;
+        }
+        updateSlider();
+      });
+      cardsContainer.addEventListener('touchcancel', (e) => {
+        updateSlider();
+      });
+    });
+  </script>
+</body>
+</html>
